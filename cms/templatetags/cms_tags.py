@@ -40,7 +40,6 @@ def show_menu(context, from_level=0, to_level=100, extra_inactive=0, extra_activ
     except KeyError:
         return {'template': 'cms/empty.html'}
     page_queryset = get_page_queryset(request)
-    
     site = Site.objects.get_current()
     lang = get_language_from_request(request)
     current_page = request.current_page
@@ -117,10 +116,11 @@ def show_menu(context, from_level=0, to_level=100, extra_inactive=0, extra_activ
             db_from_level = from_level
         if settings.CMS_HIDE_UNTRANSLATED:
             filters['title_set__language'] = lang
+        if not request.user.is_authenticated():
+            filters['menu_login_required'] = False
         pages = page_queryset.published().filter(**filters).order_by('tree_id', 
                                                                     'parent', 
                                                                     'lft')
-        
         pages = list(pages)
         if root_page:
             pages = [root_page] + pages
@@ -209,7 +209,10 @@ def show_sub_menu(context, levels=100, template="cms/sub_menu.html"):
                   'site':site}
         if settings.CMS_HIDE_UNTRANSLATED:
             filters['title_set__language'] = lang
+        if not request.user.is_authenticated():
+            filters['menu_login_required'] = False
         pages = page_queryset.published().filter(**filters)
+       
         ids = []
         pages = list(pages)
         all_pages = pages[:]
