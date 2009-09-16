@@ -2,6 +2,9 @@ from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from cms.models import CMSPlugin
 
+from easymode.i18n.decorators import L10n
+
+@L10n('title')
 class GoogleMap(CMSPlugin):
     """
     A google maps integration

@@ -6,6 +6,9 @@ from os.path import basename
 
 from django.conf import settings
 
+from easymode.i18n.decorators import L10n
+
+@L10n('title', 'description')
 class Teaser(CMSPlugin):
     """
     A Teaser

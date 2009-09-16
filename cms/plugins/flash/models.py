@@ -5,8 +5,12 @@ from django.conf import settings
 from cms.models import CMSPlugin
 from os.path import basename
 
+from filebrowser.fields import FileBrowseField
+
 class Flash(CMSPlugin):
-    file = models.FileField(_('file'), upload_to=CMSPlugin.get_media_path, help_text=_('use swf file'))
+    file = FileBrowseField( max_length        =512,
+                            initial_directory ='/',
+                            extensions_allowed=['.swf'] )
     width = models.CharField(_('width'), max_length=6)
     height = models.CharField(_('height'), max_length=6)    
     
@@ -17,7 +21,7 @@ class Flash(CMSPlugin):
         return fix_unit(self.width)    
         
     def __unicode__(self):
-        return u"%s" % basename(self.file.path)
+        return u"%s" % basename(self.file.original)
 
 def fix_unit(value):
     if not re.match(r'.*[0-9]$', value):

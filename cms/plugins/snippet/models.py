@@ -2,7 +2,9 @@ from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from cms.models import CMSPlugin
 from django.conf import settings
-from cms.utils.helpers import reversion_register
+
+if 'reversion' in settings.INSTALLED_APPS:
+    import reversion
 
 # Stores the actual data
 class Snippet(models.Model):
@@ -11,10 +13,6 @@ class Snippet(models.Model):
     """
     name = models.CharField(_("name"), max_length=255, unique=True)
     html = models.TextField(_("HTML"), blank=True)
-    template = models.CharField(_("template"), max_length=50, blank=True, \
-        help_text=_('Enter a template (i.e. "snippets/plugin_xy.html") which will be rendered. ' + \
-        'If "template" is given, the contents of field "HTML" will be passed as template variable {{ html }} to the template. ' + \
-        'Else, the content of "HTML" is rendered.'))
 
     def __unicode__(self):
         return self.name
@@ -29,6 +27,7 @@ class SnippetPtr(CMSPlugin):
     class Meta:
         verbose_name = _("Snippet")
 
-# We don't both with SnippetPtr, since all the data is actually in Snippet
-reversion_register(Snippet)
+if 'reversion' in settings.INSTALLED_APPS:
+    # We don't both with SnippetPtr, since all the data is actually in Snippet
+    reversion.register(Snippet)
 

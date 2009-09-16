@@ -6,6 +6,11 @@ from os.path import basename
 
 from django.conf import settings
 
+from filebrowser.fields import FileBrowseField
+
+from easymode.i18n.decorators import L10n
+
+@L10n('alt', 'longdesc')
 class Picture(CMSPlugin):
     """
     A Picture with or without a link
@@ -15,9 +20,9 @@ class Picture(CMSPlugin):
     FLOAT_CHOICES = ((LEFT, _("left")),
                      (RIGHT, _("right")),
                      )
-    
-    
-    image = models.ImageField(_("image"), upload_to=CMSPlugin.get_media_path)
+
+    image = FileBrowseField( max_length        =512,
+                             initial_directory ='/' )
     url = models.CharField(_("link"), max_length=255, blank=True, null=True, help_text=_("if present image will be clickable"))
     page_link = models.ForeignKey(Page, verbose_name=_("page"), null=True, blank=True, help_text=_("if present image will be clickable"))
     alt = models.CharField(_("alternate text"), max_length=255, blank=True, null=True, help_text=_("textual description of the image"))
