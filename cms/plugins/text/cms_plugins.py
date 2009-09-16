@@ -37,7 +37,7 @@ class TextPlugin(CMSPluginBase):
             pass
 
         widget = self.get_editor_widget(request, plugins)
-        TextPluginForm.declared_fields["body"] = CharField(widget=widget, required=False)
+        TextPluginForm.declared_fields["body_storage"] = CharField(widget=widget, required=False)
         return TextPluginForm
 
     def get_form(self, request, obj=None, **kwargs):
