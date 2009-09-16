@@ -10,7 +10,9 @@ from cms import settings
 from cms.models import Page
 from cms.utils.moderator import get_cmsplugin_queryset, get_page_queryset, get_title_queryset
 from cms.utils import get_language_from_request,\
-    get_extended_navigation_nodes, find_children, cut_levels, find_selected
+    get_extended_navigation_nodes, find_children, \
+    cut_levels, find_selected
+from cms.utils import navigation
 
 
 register = template.Library()
@@ -159,6 +161,7 @@ def show_menu(context, from_level=0, to_level=100, extra_inactive=0, extra_activ
                 page.ancestor = True
             if current_page and page.parent_id == current_page.parent_id and not page.pk == current_page.pk:
                 page.sibling = True
+        children = navigation.handle_navigation_manipulators(children, request)
     else:
         children = next_page.childrens
     context.update({'children':children,
@@ -258,7 +261,7 @@ def show_sub_menu(context, levels=100, template="cms/sub_menu.html"):
                     from_level = selected.level
                     to_level =  from_level+levels
                     extra_active = extra_inactive = levels
-    
+    children = navigation.handle_navigation_manipulators(children, request)
     context.update({'children':children,
                     'template':template,
                     'from_level':from_level,
@@ -423,7 +426,7 @@ def language_chooser(context, template="cms/language_chooser.html"):
 language_chooser = register.inclusion_tag('cms/dummy.html', takes_context=True)(language_chooser)
 
 def do_placeholder(parser, token):
-    error_string = '%r tag requires at least 1 and accepts at most 2 arguments' % token.contents[0]
+    error_string = '%r tag requires at least 1 and accepts at most 3arguments' % token.contents[0]
     try:
         # split_contents() knows not to split quoted strings.
         bits = token.split_contents()
@@ -435,8 +438,52 @@ def do_placeholder(parser, token):
     elif len(bits) == 3:
         #tag_name, name, theme
         return PlaceholderNode(bits[1], bits[2])
+    elif len(bits) == 4:
+        return PlaceholderNode(bits[1], bits[2],bits[3])
     else:
         raise template.TemplateSyntaxError(error_string)
+
+class MergeNode(template.Node):
+    """This template node is used to merge 2 lists and save to a template variable
+    
+    todo: merge => mergelist
+    eg: {% merge lista listb newlist %}
+    
+    Keyword arguments:
+    newlist - mergedlist saved in a template variable
+    """
+    def __init__(self,  lstA, lstB, dst):
+        self.lstA = lstA
+        self.lstB = lstB
+        self.dst = dst
+        
+    def render(self, context):
+        
+        self.lstA = context.get(self.lstA, [])
+        self.lstB = context.get(self.lstB,[]) 
+       
+        
+        cntListA = len(self.lstA)
+        cntListB = len(self.lstB)
+
+        cnt = cntListA if cntListA > cntListB else cntListB 
+        mergedList = []
+         
+        for i in range(0,cnt):
+           if i < cntListA:
+              mergedList.append(self.lstA[i])
+           else:
+              mergedList.append('')
+        
+           if i < cntListB:
+              mergedList.append(self.lstB[i])  
+           else:
+              mergedList.append('')
+        
+        context[self.dst] = mergedList
+        
+        return ''
+    
 
 class PlaceholderNode(template.Node):
     """This template node is used to output page content and
@@ -448,14 +495,24 @@ class PlaceholderNode(template.Node):
     name -- the name of the placeholder
     theme -- additional theme attribute string which gets added to the context
     """
-    def __init__(self, name, theme=None):
+    def __init__(self, name, theme=None, dst=None):
         self.name = "".join(name.lower().split('"'))
         self.theme = theme
+        self.dst = None
+        if dst <> None:
+            self.dst = dst
+            self.theme = None
 
     def render(self, context):
         if not 'request' in context:
             return ''
-        l = get_language_from_request(context['request'])
+        
+        #Always use default language
+        #change made for rosetta page content implementation
+        #l = get_language_from_request(context['request'])
+        from django.conf import settings as dsettings
+        l = dsettings.LANGUAGE_CODE
+
         request = context['request']
         
         page = request.current_page
@@ -469,14 +526,41 @@ class PlaceholderNode(template.Node):
             # this may overwrite previously defined key [theme] from settings.CMS_PLACEHOLDER_CONF
             context.update({'theme': self.theme,})
         c = ""
+        lstOutput = []
         for plugin in plugins:
-            c += plugin.render_plugin(context, self.name)
+            renderOutput = plugin.render_plugin(context, self.name)
+            if renderOutput <> '':
+                c += renderOutput
+                lstOutput.append(renderOutput)
+            
+        
+        if self.dst <> None:
+            context[self.dst] =  lstOutput
+            return ''
+        
         return c
+    
+    
         
     def __repr__(self):
         return "<Placeholder Node: %s>" % self.name
 
 register.tag('placeholder', do_placeholder)
+
+
+def do_merge(parser, token):
+    error_string = '%r tag requires at least 3 ' % token.contents[0]
+    try:
+        # split_contents() knows not to split quoted strings.
+        bits = token.split_contents()
+    except ValueError:
+        raise template.TemplateSyntaxError(error_string)
+    if len(bits) == 4:
+        return MergeNode(bits[1], bits[2],bits[3])
+    else:
+        raise template.TemplateSyntaxError(error_string)
+
+register.tag('merge',do_merge)
 
 def do_page_attribute(parser, token):
     error_string = '%r tag requires one argument' % token.contents[0]
@@ -494,12 +578,12 @@ def do_page_attribute(parser, token):
 class PageAttributeNode(template.Node):
     """This template node is used to output attribute from page such
     as its title and slug.
-
-    eg: {% page_attribute field-name %}
-
+    
+    eg: {% page attribute field-name %}
+    
     Keyword arguments:
     field-name -- the name of the field to output. One of "title",
-    "slug", "meta_description" or "meta_keywords" -- Use without qoutes!
+    "slug", "meta_description" or "meta_keywords"
     """
     def __init__(self, name):
         self.name = name.lower()
