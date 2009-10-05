@@ -45,11 +45,8 @@ def details(request, page_id=None, slug=None, template_name=settings.CMS_TEMPLAT
     # get the right model
     page_queryset = get_page_queryset(request)
     
-    #lang = get_language_from_request(request)
-    # Always use default language
-    from django.conf import settings as dsettings
-    lang = dsettings.LANGUAGE_CODE
-    
+    lang = get_language_from_request(request)
+
     site = Site.objects.get_current()
     if 'preview' in request.GET.keys():
         pages = page_queryset.all()

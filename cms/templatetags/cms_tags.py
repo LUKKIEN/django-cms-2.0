@@ -10,9 +10,7 @@ from cms import settings
 from cms.models import Page
 from cms.utils.moderator import get_cmsplugin_queryset, get_page_queryset, get_title_queryset
 from cms.utils import get_language_from_request,\
-    get_extended_navigation_nodes, find_children, \
-    cut_levels, find_selected
-from cms.utils import navigation
+    get_extended_navigation_nodes, find_children, cut_levels, find_selected
 
 
 register = template.Library()
@@ -161,7 +159,6 @@ def show_menu(context, from_level=0, to_level=100, extra_inactive=0, extra_activ
                 page.ancestor = True
             if current_page and page.parent_id == current_page.parent_id and not page.pk == current_page.pk:
                 page.sibling = True
-        children = navigation.handle_navigation_manipulators(children, request)
     else:
         children = next_page.childrens
     context.update({'children':children,
@@ -261,7 +258,7 @@ def show_sub_menu(context, levels=100, template="cms/sub_menu.html"):
                     from_level = selected.level
                     to_level =  from_level+levels
                     extra_active = extra_inactive = levels
-    children = navigation.handle_navigation_manipulators(children, request)
+    
     context.update({'children':children,
                     'template':template,
                     'from_level':from_level,
@@ -452,9 +449,10 @@ class MergeNode(template.Node):
     Keyword arguments:
     newlist - mergedlist saved in a template variable
     """
-    def __init__(self,  lstA, lstB, dst):
+    def __init__(self,  dst, lstA, lstB, lstC=None):
         self.lstA = lstA
         self.lstB = lstB
+        self.lstC = lstC
         self.dst = dst
         
     def render(self, context):
@@ -462,11 +460,20 @@ class MergeNode(template.Node):
         self.lstA = context.get(self.lstA, [])
         self.lstB = context.get(self.lstB,[]) 
        
+        if self.lstC <> None:
+            self.lstC = context.get(self.lstC,[]) 
+            cntListC = len(self.lstC)
+        
         
         cntListA = len(self.lstA)
         cntListB = len(self.lstB)
 
+        
         cnt = cntListA if cntListA > cntListB else cntListB 
+        
+        if self.lstC <> None:
+            cnt = cntListC if cntListC > cnt else cnt
+        
         mergedList = []
          
         for i in range(0,cnt):
@@ -479,10 +486,18 @@ class MergeNode(template.Node):
               mergedList.append(self.lstB[i])  
            else:
               mergedList.append('')
+             
+            
+           if self.lstC <> None: 
+               if i < cntListC:
+                   mergedList.append(self.lstC[i])
+               else:
+                   mergedList.append('') 
         
         context[self.dst] = mergedList
         
         return ''
+    
     
 
 class PlaceholderNode(template.Node):
@@ -507,11 +522,7 @@ class PlaceholderNode(template.Node):
         if not 'request' in context:
             return ''
         
-        #Always use default language
-        #change made for rosetta page content implementation
-        #l = get_language_from_request(context['request'])
-        from django.conf import settings as dsettings
-        l = dsettings.LANGUAGE_CODE
+        l = get_language_from_request(context['request'])
 
         request = context['request']
         
@@ -557,6 +568,8 @@ def do_merge(parser, token):
         raise template.TemplateSyntaxError(error_string)
     if len(bits) == 4:
         return MergeNode(bits[1], bits[2],bits[3])
+    elif len(bits) == 5:
+        return MergeNode(bits[1], bits[2],bits[3],bits[4])
     else:
         raise template.TemplateSyntaxError(error_string)
 

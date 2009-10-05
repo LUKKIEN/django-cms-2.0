@@ -3,9 +3,9 @@ from django.utils.translation import ugettext_lazy as _
 from cms.models import CMSPlugin, Page
 from django.conf import settings
 
-from easymode.i18n.decorators import L10n
+from easymode.i18n.decorators import L10n_CMS
 
-@L10n('name')
+@L10n_CMS('name')
 class Link(CMSPlugin):
     """
     A link to an other page or to an external website

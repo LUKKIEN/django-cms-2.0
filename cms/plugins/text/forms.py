@@ -4,7 +4,7 @@ from django import forms
 
 
 class TextForm(ModelForm):
-    body_storage = forms.CharField()
+    body = forms.CharField()
     
     class Meta:
         model = Text

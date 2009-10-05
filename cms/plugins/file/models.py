@@ -7,9 +7,9 @@ from posixpath import join, basename, splitext, exists
 from cms import settings as cms_settings
 from django.conf import settings
 
-from easymode.i18n.decorators import L10n
+from easymode.i18n.decorators import L10n_CMS
 
-@L10n('title')
+@L10n_CMS('title')
 class File(CMSPlugin):
     """
     Plugin for storing any type of file.

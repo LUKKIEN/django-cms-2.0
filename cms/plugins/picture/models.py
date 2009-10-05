@@ -8,9 +8,9 @@ from django.conf import settings
 
 from filebrowser.fields import FileBrowseField
 
-from easymode.i18n.decorators import L10n
+from easymode.i18n.decorators import L10n_CMS
 
-@L10n('alt', 'longdesc')
+@L10n_CMS('alt', 'longdesc')
 class Picture(CMSPlugin):
     """
     A Picture with or without a link
@@ -34,5 +34,5 @@ class Picture(CMSPlugin):
             return self.alt[:40]
         elif self.image:
             # added if, because it raised attribute error when file wasnt defined
-            return u"%s" % basename(self.image.path)
+            return u"%s" % basename(self.image.original)
         return "<empty>"

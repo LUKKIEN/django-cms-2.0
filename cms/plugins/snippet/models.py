@@ -27,6 +27,9 @@ class SnippetPtr(CMSPlugin):
     class Meta:
         verbose_name = _("Snippet")
 
+    def __unicode__(self):
+        return self.snippet.name
+
 if 'reversion' in settings.INSTALLED_APPS:
     # We don't both with SnippetPtr, since all the data is actually in Snippet
     reversion.register(Snippet)

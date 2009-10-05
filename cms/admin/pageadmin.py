@@ -45,9 +45,9 @@ class PageAdmin(admin.ModelAdmin):
     
     exclude = ['created_by', 'changed_by', 'lft', 'rght', 'tree_id', 'level']
     mandatory_placeholders = ('title', 'slug', 'parent', 'site', 'meta_description', 'meta_keywords', 'page_title', 'menu_title')
-    top_fields = ['language']
+    top_fields = ['language', 'group']
     general_fields = ['title', 'slug', ('published', 'in_navigation')]
-    add_general_fields = ['title', 'slug', 'language', 'template']
+    add_general_fields = ['title', 'slug', 'language', 'group', 'template']
     advanced_fields = ['reverse_id',  'overwrite_url', 'login_required', 'menu_login_required']
     template_fields = ['template']
     change_list_template = "admin/cms/page/change_list.html"

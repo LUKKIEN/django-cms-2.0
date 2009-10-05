@@ -24,6 +24,8 @@ class PageAddForm(forms.ModelForm):
         help_text=_('The default title'))
     slug = forms.CharField(label=_("Slug"), widget=forms.TextInput(),
         help_text=_('The part of the title that is used in the url'))
+    group = forms.ChoiceField(label=_("Group"), choices=Page.GROUP_CHOICES,
+        help_text=_('The group of the page.'))
     language = forms.ChoiceField(label=_("Language"), choices=cms_settings.CMS_LANGUAGES,
         help_text=_('The current language of the content fields.'))
     
@@ -42,7 +44,7 @@ class PageAddForm(forms.ModelForm):
             [name for name, value in cms_settings.CMS_TEMPLATES]:
             # non-root pages default to inheriting their template
             self.fields['template'].initial = cms_settings.CMS_TEMPLATE_INHERITANCE_MAGIC
-        
+
     def clean(self):
         cleaned_data = self.cleaned_data
         if 'slug' in cleaned_data.keys():

@@ -7,6 +7,10 @@ from cms.models.managers import TitleManager
 from cms.models.pagemodel import Page
 from cms.utils.helpers import reversion_register
 
+
+from easymode.i18n.decorators import L10n_CMS
+
+@L10n_CMS('title')
 class Title(Publisher):
     language = models.CharField(_("language"), max_length=5, db_index=True)
     title = models.CharField(_("title"), max_length=255)
