@@ -24,7 +24,8 @@ class SnippetPtr(CMSPlugin):
 
     class Meta:
         verbose_name = _("Snippet")
-        search_fields = ('snippet__html',)
+        
+    search_fields = ('snippet__html',)
 
     def __unicode__(self):
         # Return the referenced snippet's name rather than the default (ID #)

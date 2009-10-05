@@ -202,6 +202,7 @@ div#sitemap li, div#sitemap ul{list-style-type: none;}
 #sitemap li .col-moderator,
 #sitemap li .col-lastchange,
 #sitemap li .col-draft,
+#sitemap li .col-i18n,
 #sitemap li .col-creator{
 	border-left:1px solid #DEDEDC;
 	text-align:center;
@@ -220,6 +221,7 @@ div#sitemap li, div#sitemap ul{list-style-type: none;}
 }
 
 #sitemap li .col-softroot,
+#sitemap li .col-i18n,
 #sitemap li .col-language{
 	background:none;
 	border:none;
@@ -328,6 +330,7 @@ div#sitemap ul.header li{
 #sitemap ul.header li .col-moderator,
 #sitemap ul.header li .col-lastchange,
 #sitemap ul.header li .col-draft,
+#sitemap ul.header li .col-i18n,
 #sitemap ul.header li .col-creator{
 	height:auto;
 	border:none;

@@ -305,6 +305,7 @@ $(document).ready(function() {
 		$('#sitemap ul .col-softroot').syncWidth(0);
 		$('#sitemap ul .col-template').syncWidth(0);
 		$('#sitemap ul .col-creator').syncWidth(0);
+		$('#sitemap ul .col-i18n').syncWidth(0);
 		
 		$('#sitemap ul .col-lastchange').syncWidth(0);
 		$('#sitemap ul .col-moderator').syncWidth(68);
