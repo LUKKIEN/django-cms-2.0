@@ -259,7 +259,8 @@ class PageAdmin(admin.ModelAdmin):
             obj.save(force_with_moderation=force_with_moderation)
         language = form.cleaned_data['language']
         
-        if target is not None and position is not None:
+        if target is not None and position is not None and not position == 'undefined':
+
             try:
                 target = self.model.objects.get(pk=target)
             except self.model.DoesNotExist:
