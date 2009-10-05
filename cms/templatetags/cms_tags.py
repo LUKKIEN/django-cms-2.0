@@ -10,7 +10,10 @@ from cms import settings
 from cms.models import Page
 from cms.utils.moderator import get_cmsplugin_queryset, get_page_queryset, get_title_queryset
 from cms.utils import get_language_from_request,\
-    get_extended_navigation_nodes, find_children, cut_levels, find_selected
+    get_extended_navigation_nodes, find_children, \
+    cut_levels, find_selected
+from cms.utils import navigation
+from cms.utils.i18n import get_fallback_languages
 
 
 register = template.Library()
@@ -59,7 +62,7 @@ def show_menu(context, from_level=0, to_level=100, extra_inactive=0, extra_activ
         except NoHomeFound:
             home_pk = 0
     if not next_page: #new menu... get all the data so we can save a lot of queries
-        ids = []
+        
         children = []
         ancestors = []
         if current_page:
@@ -126,6 +129,7 @@ def show_menu(context, from_level=0, to_level=100, extra_inactive=0, extra_activ
             pages = [root_page] + pages
         all_pages = pages[:]
         root_level = getattr(root_page, 'level', None)
+        ids = []
         for page in pages:# build the tree
             if page.level >= db_from_level:
                 ids.append(page.pk)
@@ -153,12 +157,28 @@ def show_menu(context, from_level=0, to_level=100, extra_inactive=0, extra_activ
         for page in all_pages:# add the title and slugs and some meta data
             for title in titles:
                 if title.page_id == page.pk:
-                    page.title_cache = title
-                    #titles.remove(title)
+                    if not hasattr(page, "title_cache"):
+                        page.title_cache = {}
+                    page.title_cache[title.language] = title
+                    ids.remove(page.pk)
             if page.pk in ancestors:
                 page.ancestor = True
             if current_page and page.parent_id == current_page.parent_id and not page.pk == current_page.pk:
                 page.sibling = True
+        if ids:
+            fallbacks = get_fallback_languages(lang)
+            for l in fallbacks:
+                titles = list(get_title_queryset(request).filter(page__in=ids, language=l))
+                for page in all_pages:# add the title and slugs and some meta data
+                    for title in titles:
+                        if title.page_id == page.pk:
+                            if not hasattr(page, "title_cache"):
+                                page.title_cache = {}
+                            page.title_cache[title.language] = title
+                            ids.remove(page.pk)
+                if not ids:
+                    break
+        children = navigation.handle_navigation_manipulators(children, request)
     else:
         children = next_page.childrens
     context.update({'children':children,
@@ -235,7 +255,9 @@ def show_sub_menu(context, levels=100, template="cms/sub_menu.html"):
         for p in all_pages:# add the title and slugs and some meta data
             for title in titles:
                 if title.page_id == p.pk:
-                    p.title_cache = title
+                    if not hasattr(page, "title_cache"):
+                        page.title_cache = {}
+                    page.title_cache[title.language] = title
         from_level = page.level
         to_level = page.level+levels
         extra_active = extra_inactive = levels
@@ -297,10 +319,14 @@ def show_breadcrumb(context, start_level=0, template="cms/breadcrumb.html"):
             anc.home_pk_cache = home.pk 
             for title in titles:
                 if title.page_id == anc.pk:
-                    anc.title_cache = title
+                    if not hasattr(anc, "title_cache"):
+                        anc.title_cache = {}
+                    anc.title_cache[title.language] = title
         for title in titles:
             if title.page_id == page.pk:
-                page.title_cache = title
+                if not hasattr(page, "title_cache"):
+                    page.title_cache = {}
+                page.title_cache[title.language] = title
     else:
         site = Site.objects.get_current()
         ancestors = []
@@ -328,7 +354,9 @@ def show_breadcrumb(context, start_level=0, template="cms/breadcrumb.html"):
                         ancs += [anc]
                         for title in titles:
                             if title.page_id == anc.pk:
-                                anc.title_cache = title
+                                if not hasattr(anc, "title_cache"):
+                                    anc.title_cache = {}
+                                anc.title_cache[title.language] = title
                     ancestors = ancestors + selected.ancestors_ascending[1:] + [selected]
     context.update({'ancestors':ancestors,
                     'template': template})
@@ -399,7 +427,7 @@ def page_language_url(context, lang):
         url = "/%s" % lang + request._language_changer(lang)
     else:
         try:
-            url = "/%s" % lang + page.get_absolute_url(language=lang, fallback=not settings.CMS_HIDE_UNTRANSLATED)
+            url = "/%s" % lang + page.get_absolute_url(language=lang, fallback=False)
         except:
             url = "/%s/" % lang 
     if url:
@@ -463,12 +491,10 @@ class MergeNode(template.Node):
         if self.lstC <> None:
             self.lstC = context.get(self.lstC,[]) 
             cntListC = len(self.lstC)
-        
-        
+                
         cntListA = len(self.lstA)
         cntListB = len(self.lstB)
 
-        
         cnt = cntListA if cntListA > cntListB else cntListB 
         
         if self.lstC <> None:
@@ -486,7 +512,6 @@ class MergeNode(template.Node):
               mergedList.append(self.lstB[i])  
            else:
               mergedList.append('')
-             
             
            if self.lstC <> None: 
                if i < cntListC:
@@ -497,7 +522,6 @@ class MergeNode(template.Node):
         context[self.dst] = mergedList
         
         return ''
-    
     
 
 class PlaceholderNode(template.Node):
@@ -519,6 +543,8 @@ class PlaceholderNode(template.Node):
             self.theme = None
 
     def render(self, context):
+        if context.get('display_placeholder_names_only'):
+            return "<!-- PlaceholderNode: %s -->" % self.name
         if not 'request' in context:
             return ''
         

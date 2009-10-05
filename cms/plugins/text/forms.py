@@ -4,9 +4,8 @@ from django import forms
 
 
 class TextForm(ModelForm):
-    body = forms.CharField()
+    body_storage = forms.CharField()
     
     class Meta:
         model = Text
         exclude = ('page', 'position', 'placeholder', 'language', 'plugin_type')
-        

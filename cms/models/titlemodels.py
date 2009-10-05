@@ -16,7 +16,7 @@ class Title(Publisher):
     title = models.CharField(_("title"), max_length=255)
     menu_title = models.CharField(_("title"), max_length=255, blank=True, null=True, help_text=_("overwrite the title in the menu"))
     slug = models.SlugField(_("slug"), max_length=255, db_index=True, unique=False)
-    path = models.CharField(_("path"), max_length=255, db_index=True)
+    path = models.CharField(_("Path"), max_length=255, db_index=True)
     has_url_overwrite = models.BooleanField(_("has url overwrite"), default=False, db_index=True, editable=False)
     application_urls = models.CharField(_('application'), max_length=200, choices=settings.CMS_APPLICATIONS_URLS, blank=True, null=True, db_index=True)
     redirect = models.CharField(_("redirect"), max_length=255, blank=True, null=True)
@@ -88,6 +88,5 @@ class EmptyTitle(object):
     @property
     def overwrite_url(self):
         return None
-    
     
 reversion_register(Title)

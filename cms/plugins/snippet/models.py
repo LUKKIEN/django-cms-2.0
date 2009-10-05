@@ -1,10 +1,8 @@
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from cms.models import CMSPlugin
-from django.conf import settings
 
-if 'reversion' in settings.INSTALLED_APPS:
-    import reversion
+from cms.utils.helpers import reversion_register
 
 # Stores the actual data
 class Snippet(models.Model):
@@ -26,11 +24,15 @@ class SnippetPtr(CMSPlugin):
 
     class Meta:
         verbose_name = _("Snippet")
+        search_fields = ('snippet__html',)
+
+    def __unicode__(self):
+        # Return the referenced snippet's name rather than the default (ID #)
+        return self.snippet.name
+
 
     def __unicode__(self):
         return self.snippet.name
 
-if 'reversion' in settings.INSTALLED_APPS:
-    # We don't both with SnippetPtr, since all the data is actually in Snippet
-    reversion.register(Snippet)
+reversion_register(Snippet)
 

@@ -18,3 +18,5 @@ class Link(CMSPlugin):
     
     def __unicode__(self):
         return self.name
+
+    search_fields = ('name',)
