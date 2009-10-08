@@ -21,7 +21,7 @@ from django.core.exceptions import ValidationError
 
 
 class PageAddForm(forms.ModelForm):
-    title = forms.CharField(label=_("Title"), widget=forms.TextInput(),
+    title = forms.CharField(label=_("Page title"), widget=forms.TextInput(),
         help_text=_('The default title'))
     slug = forms.CharField(label=_("Slug"), widget=forms.TextInput(),
         help_text=_('The part of the title that is used in the url'))

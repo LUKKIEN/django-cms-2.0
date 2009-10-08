@@ -30,9 +30,9 @@ class Page(MpttPublisher):
     MODERATOR_APPROVED_WAITING_FOR_PARENTS = 11
 
     GROUP_CHOICES = ( ('none',   _('---')),
-                      ('group1', _('Group 1')),
-                      ('group2', _('Group 2')),
-                      ('group3', _('Group 3')) )
+                      (1, _('Group 1')),
+                      (2, _('Group 2')),
+                      (3, _('Group 3')) )
     
     moderator_state_choices = (
         (MODERATOR_CHANGED, _('changed')),
