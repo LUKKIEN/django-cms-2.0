@@ -5,6 +5,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.utils.translation import ugettext_lazy as _
 from cms.models import MASK_PAGE, MASK_CHILDREN, MASK_DESCENDANTS
 from cms.utils.admin import get_admin_menu_item_context
+from cms.utils.i18n import get_fallback_languages 
 
 register = template.Library()
 
@@ -80,6 +81,13 @@ def preview_link(page, language):
     if 'cms.middleware.multilingual.MultilingualURLMiddleware' in settings.MIDDLEWARE_CLASSES:
         return "/%s%s" % (language, page.get_absolute_url(language))
     return page.get_absolute_url(language)
+
+def get_fallback_language(language):
+    language_list = get_fallback_languages(language)
+    if len(language_list) > 0:
+        return language_list[0]
+    return ""
+get_fallback_language = register.filter(get_fallback_language)
 
 def render_plugin(context, plugin):
     return {'content': plugin.render_plugin(context, admin=True)}
