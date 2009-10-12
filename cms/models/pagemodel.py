@@ -113,7 +113,7 @@ class Page(MpttPublisher):
         Doesn't checks for add page permissions anymore, this is done in PageAdmin.
         """
         from cms.utils.moderator import update_moderation_message
-        # get a flat list of all tree nodes in reverse tree order
+        
         descendants = [self] + list(self.get_descendants().order_by('-rght'))
         site_reverse_ids = [ x[0] for x in Page.objects.filter(site=site, reverse_id__isnull=False).values_list('reverse_id') ]
         if target:
@@ -126,49 +126,45 @@ class Page(MpttPublisher):
                 tree = []
         else:
             tree = []
-
         first = True
-        level_dif = self.level - target.level - 1
-        
-        # list of all reverse_id values in the target site
-        all_reverse_ids = [ x[0] for x in Page.objects.filter(site=site, reverse_id__isnull=False).values_list('reverse_id') ]
-        
         for page in descendants:
-            new_level = page.level - level_dif
-            dif = new_level - tree[-1].level 
-            if dif < 0:
-                # hopping back up.. remove the obsolete pages from the stack
-                tree = tree[:dif-1]
-            elif dif==0:
-                # same level as before... remove the item from
-                # the last iteration (it did not have any children)
-                tree = tree[:-1]
-            # assign the parent for this page
-            current_parent = tree[-1]
-            # append the current page to the stack... we don't know if it has children
-            # but if it does they need this to be in the stack the use it as parent
-            tree.append(page)
-            
+           
             titles = list(page.title_set.all())
             plugins = list(page.cmsplugin_set.all().order_by('tree_id', '-rght'))
-            
             origin_id = page.id
-            # IMPORTANT NOTE: self gets changed in next few lines to page!!
-            
+            page.old_pk = page.pk
             page.pk = None
             page.level = None
             page.rght = None
             page.lft = None
             page.tree_id = None
-            page.status = Page.MODERATOR_NEED_APPROVEMENT
-            page.parent = current_parent
+            page.published = False
+            page.publisher_status = Page.MODERATOR_CHANGED
             page.publisher_public_id = None
-            if page.reverse_id in all_reverse_ids:
-                # reverse_id already exists for some page on the target site
+            if page.reverse_id in site_reverse_ids:
                 page.reverse_id = None
+            if first:
+                first = False
+                if tree:
+                    page.parent = tree[0]
+                else:
+                    page.parent = None
+                page.insert_at(target, position)
+            else:
+                count = 1
+                found = False
+                for prnt in tree:
+                    if prnt.old_pk == page.parent_id:
+                        page.parent = prnt
+                        tree = tree[0:count]
+                        found = True
+                        break
+                    count += 1
+                if not found:
+                    page.parent = None
+            tree.append(page)
+            page.site = site
             page.save()
-            #print "%s%s (id: %s new_level: %s dif: %s parent_id: %s)    current stack: %s" % ("   "*new_level,page,page.id,new_level,dif,page.parent_id,[ u"%s"%z for z in tree])
-            update_moderation_message(page, _('Page was copied.'))
             # copy moderation, permissions if necessary
             if settings.CMS_PERMISSION and copy_permissions:
                 from cms.models.permissionmodels import PagePermission
@@ -176,36 +172,34 @@ class Page(MpttPublisher):
                     permission.pk = None
                     permission.page = page
                     permission.save()
-            
             if settings.CMS_MODERATOR and copy_moderation:
                 from cms.models.moderatormodels import PageModerator
                 for moderator in PageModerator.objects.filter(page__id=origin_id):
                     moderator.pk = None
                     moderator.page = page
                     moderator.save()
-            
-            if first:
-                first = False
-                page.move_to(target, position)
-            page.site = site
-            page.save()
+            update_moderation_message(page, unicode(_('Page was copied.')))
             for title in titles:
                 title.pk = None
                 title.publisher_public_id = None
+                title.published = False
                 title.page = page
                 title.slug = get_available_slug(title)
                 title.save()
             ptree = []
             for p in plugins:
-                plugin, cls = p.get_plugin_instance()
+                try:
+                    plugin, cls = p.get_plugin_instance()
+                except KeyError: #plugin type not found anymore
+                    continue
                 p.page = page
                 p.pk = None
                 p.id = None
                 p.tree_id = None
                 p.lft = None
                 p.rght = None
+                p.inherited_public_id = None
                 p.publisher_public_id = None
-                
                 if p.parent:
                     pdif = p.level - ptree[-1].level
                     if pdif < 0:
@@ -226,7 +220,9 @@ class Page(MpttPublisher):
                     plugin.rght = p.rght
                     plugin.level = p.level
                     plugin.cmsplugin_ptr = p
-                    plugin.publisher_public_id = p.pk
+                    plugin.publisher_public_id = None
+                    plugin.public_id = None
+                    plugin.plubished = False
                     plugin.save()
     
     def save(self, no_signals=False, change_state=True, commit=True, force_with_moderation=False, force_state=None, **kwargs):

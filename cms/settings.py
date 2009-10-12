@@ -98,7 +98,7 @@ CMS_LANGUAGE_FALLBACK = getattr(settings, 'CMS_LANGUAGE_FALLBACK', True)
 # example: {'de': ['en', 'fr'],
 #           'en': ['de'],
 #          }
-CMS_LANGUAGE_CONF = getattr(settings, 'CMS_LANGUAGE_CONF', {})
+CMS_LANGUAGE_CONF = getattr(settings, 'CMS_LANGUAGE_CONF', settings.FALLBACK_LANGUAGES)
 
 # Defines which languages should be offered.
 CMS_LANGUAGES = getattr(settings, 'CMS_LANGUAGES', settings.LANGUAGES)
