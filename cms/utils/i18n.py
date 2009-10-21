@@ -36,13 +36,12 @@ def get_fallback_languages(language):
     if language in conf:
         l_list = conf[language]
     else:
-        languages = cms_settings.CMS_LANGUAGE_FALLBACK      
+     #   languages = cms_settings.CMS_LANGUAGE_FALLBACK      
         l_list = []
-        print languages
-        for l in languages:
-            l_list.append(l[0])
-    if language in l_list:
-        l_list.remove(language)
+        #for l in languages:
+         #   l_list.append(l[0])
+    #if language in l_list:
+     #   l_list.remove(language)
     return l_list
     
     

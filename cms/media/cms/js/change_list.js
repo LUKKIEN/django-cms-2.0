@@ -91,7 +91,8 @@ function initTree(){
 	tree.init($("div.tree"), options);
 };
 
-$(document).ready(function() {	
+$(document).ready(function() {
+	
     var selected_page = false;
     var action = false;
 	

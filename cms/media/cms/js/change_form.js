@@ -1,5 +1,6 @@
 $(document).ready(function() {
-    var new_slug = true;
+    		
+	var new_slug = true;
     if($('#id_slug')[0].value){
         new_slug = false;
     }    
@@ -93,6 +94,9 @@ $(document).ready(function() {
 			load_plugin($($(this).children("li")[0]));
 		}
     });*/
+	
+	
+	
 	    
 });
 

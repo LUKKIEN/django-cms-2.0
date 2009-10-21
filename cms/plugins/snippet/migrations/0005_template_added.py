@@ -8,7 +8,7 @@ class Migration:
     def forwards(self, orm):
         
         # Adding field 'Snippet.template'
-        db.add_column('snippet_snippet', 'template', orm['snippet.snippet:template'])
+        db.add_column('snippet_snippet', 'template', orm['snippet.snippet:template'],{'null': 'True', 'blank': 'True'})
         
         
     
@@ -112,7 +112,7 @@ class Migration:
             'html': ('models.TextField', [], {'blank': 'True'}),
             'id': ('models.AutoField', [], {'primary_key': 'True'}),
             'name': ('models.CharField', [], {'max_length': '255', 'unique': 'True'}),
-            'template': ('models.CharField', [], {'max_length': '50', 'blank': 'True'}),
+            'template': ('models.CharField', [], {'max_length': '50','null': 'True', 'blank': 'True'}),
         },
         'snippet.snippetptr': {
             'Meta': {'db_table': "'cmsplugin_snippetptr'"},

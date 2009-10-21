@@ -83,11 +83,21 @@ def preview_link(page, language):
     return page.get_absolute_url(language)
 
 def get_fallback_language(language):
-    language_list = get_fallback_languages(language)
-    if len(language_list) > 0:
-        return language_list[0]
-    return ""
+    try:
+        language_list = get_fallback_languages(language)
+        if len(language_list) > 0:          
+            return language_list[0]
+    except:
+        return None
 get_fallback_language = register.filter(get_fallback_language)
+
+def has_fallback_language(language):
+    try:
+        language_list = get_fallback_languages(language)        
+        return len(language_list) > 0
+    except: 
+        return False
+has_fallback_language = register.filter(has_fallback_language)
 
 def render_plugin(context, plugin):
     return {'content': plugin.render_plugin(context, admin=True)}
